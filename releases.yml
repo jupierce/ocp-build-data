@@ -41,6 +41,10 @@ releases:
         component: 'rhcos'
       - code: INCONSISTENT_RHCOS_RPMS
         component: 'rhcos'
+      rhcos:
+        machine-os-content:
+          images:
+            x86_64: quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:3a6e70ae5c1d2da57f286ac9cdd0df38c45dff500c46d553187344a9d338bbd0
   art3171:
     assembly:
       type: custom
