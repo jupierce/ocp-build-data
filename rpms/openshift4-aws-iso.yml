@@ -4,7 +4,7 @@ content:
       branch:
         target: initial_conformance
       url: git@github.com:jupierce/openshift4-c2s.git
-    specfile: oc.spec
+    specfile: rpm.spec
 name: openshift4-aws-iso
 owners:
 - jupierce@redhat.com
