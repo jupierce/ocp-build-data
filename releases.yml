@@ -37,27 +37,9 @@ releases:
                   web: https://github.com/jupierce/driver-toolkit
             distgit:
               branch: rhaos-4.14-rhel-9
-            "enabled_repos!":
-            #- rhel-92-baseos-rpms
-            #- rhel-92-appstream-rpms
-            - rhel-9-appstream-rpms
-            - rhel-9-baseos-rpms
-            - rhel-9-server-ose-rpms-embargoed
-            #- rhel-92-rt-rpms
             from:
               member: openshift-enterprise-base-rhel9
       group:
-        "arches!":
-        # There is no kernel-rt for non-x86 arch for rhel 9.2 or centos-9 stream.
-        - x86_64
-        dependencies:
-          rpms:
-          - el9: kernel-5.14.0-285.el9
-            why: Provide DTK for Centos 9.2 kernel
-            non_gc_tag: not applicable
-          - el9: kernel-rt-5.14.0-285.el9
-            why: Provide DTK for Centos 9.2 kernel
-            non_gc_tag: not applicable
         repos:
           rhel-92-baseos-rpms:
             conf:
@@ -69,9 +51,9 @@ releases:
 #                ppc64le: https://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/ppc64le/os/
 #                s390x: https://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/s390x/os/
 #                x86_64: https://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.2.0/compose/BaseOS/x86_64/os/
-#                aarch64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/aarch64/os/
-#                ppc64le: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/ppc64le/os/
-#                s390x: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/s390x/os/
+                aarch64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/aarch64/os/
+                ppc64le: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/ppc64le/os/
+                s390x: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/s390x/os/
                 x86_64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/
             content_set:
               default: rhel-9-for-x86_64-baseos-eus-rpms__9_DOT_0
@@ -90,9 +72,9 @@ releases:
 #                ppc64le: https://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.2.0/compose/AppStream/ppc64le/os/
 #                s390x: https://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.2.0/compose/AppStream/s390x/os/
 #                x86_64: https://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.2.0/compose/AppStream/x86_64/os/
-#                aarch64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/aarch64/os/
-#                ppc64le: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/ppc64le/os/
-#                s390x: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/s390x/os/
+                aarch64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/aarch64/os/
+                ppc64le: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/ppc64le/os/
+                s390x: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/s390x/os/
                 x86_64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/x86_64/os/
             content_set:
               default: rhel-9-for-x86_64-appstream-eus-rpms__9_DOT_0
@@ -105,11 +87,14 @@ releases:
             conf:
               extra_options:
                 module_hotfixes: 1
-                includepkgs: "kernel*"
+                includepkgs: "kernel-rt*"
               baseurl:
-#                aarch64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/RT/aarch64/os/
-#                ppc64le: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/RT/ppc64le/os/
-#                s390x: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/RT/s390x/os/
+                # Kernel RT is x86 only, so fake repos for other arches. The driver-toolkit Dockerfile only installs the kernel-rt
+                # for x86_64.
+                aarch64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/aarch64/os/
+                ppc64le: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/ppc64le/os/
+                s390x: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/AppStream/s390x/os/
+
                 x86_64: https://ocp-artifacts.hosts.prod.psi.rdu2.redhat.com/pub/CentOS/mirror.stream.centos.org/9-stream/RT/x86_64/os/
             content_set:
               default: rhel-9-for-x86_64-appstream-eus-rpms__9_DOT_0
