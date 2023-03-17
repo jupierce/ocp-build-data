@@ -14,7 +14,7 @@ releases:
       - code: FAILED_CROSS_RPM_VERSIONS_REQUIREMENT
         component: 'rhcos'
 
-  # ./doozer --arches x86_64 --assembly art6195 --working-dir art6195 --data-path https://github.com/jupierce/ocp-build-data --group openshift-4.14 --latest-parent-version -i driver-toolkit images:rebase --version v4.14.0 --release '9999.p?' --message 'test rhel 9 build' --push
+  # ./doozer --arches --assembly art6195 --working-dir art6195 --data-path https://github.com/jupierce/ocp-build-data --group openshift-4.14 --latest-parent-version -i driver-toolkit images:rebase --version v4.14.0 --release '9999.p?' --message 'test rhel 9 build' --push
   # ./doozer --assembly art6195 --working-dir art6195 --data-path https://github.com/jupierce/ocp-build-data --group openshift-4.14 --latest-parent-version -i driver-toolkit images:build
   art6195:
     assembly:
@@ -35,6 +35,13 @@ releases:
                 git:
                   url: git@github.com:jupierce/driver-toolkit.git
                   web: https://github.com/jupierce/driver-toolkit
+            "enabled_repos!":
+            - rhel-9-baseos-rpms
+            - rhel-9-server-ose-rpms-embargoed
+            - rhel-9-appstream-rpms
+            - rhel-92-baseos-rpms
+            - rhel-92-appstream-rpms
+            - rhel-92-rt-rpms
             distgit:
               branch: rhaos-4.14-rhel-9
             from:
