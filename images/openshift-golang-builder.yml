@@ -5,8 +5,8 @@ content:
     dockerfile: openshift-golang-builder.Dockerfile
     git:
       branch:
-        target: rhel-8-golang-1.17
-      url: git@github.com:openshift/ocp-build-data.git
+        target: rhel-8-golang-1.17-go-wrapper
+      url: git@github.com:jupierce/ocp-build-data.git
 enabled_repos:
 - rhel-8-server-ose-build-rpms
 # for clang
@@ -17,8 +17,6 @@ enabled_repos:
 from:
   stream: rhel8
 
-image_build_method: imagebuilder
-
 labels:
   io.k8s.description: golang builder image for Red Hat internal builds
 
@@ -27,9 +25,10 @@ name: openshift/golang-builder
 owners:
 - aos-team-art@redhat.com
 
-additional_tags:
-- 'rhel_8_golang_1.17'
-- 'rhel_8_1.17'
+# DO NOT BUILD TEST BUILDS INTO THESE TAGS. CPAAS CONSUMES THEM.
+#additional_tags:
+#- 'rhel_8_golang_1.19'
+#- 'rhel_8_1.19'
 
 maintainer:
   component: Release
