@@ -4,8 +4,8 @@ content:
     dockerfile: images/openshift-golang-builder.Dockerfile
     git:
       branch:
-        target: rhel-8-golang-1.10
-      url: git@github.com:openshift/ocp-build-data.git
+        target: rhel-8-golang-1.10-go-wrapper
+      url: git@github.com:jupierce/ocp-build-data.git
     modifications:
       - action: replace
         match: 'go-toolset-1.10'
@@ -13,16 +13,15 @@ content:
 distgit:
   branch: rhaos-4.1-rhel-8
 enabled_repos:
-- rhel-server-ose-build-rpms
-- rhel-8-server-go-toolset
+  - rhel-server-ose-build-rpms
+  - rhel-8-server-go-toolset
 from:
   image: openshift/ose-base:ubi8
 labels:
   io.k8s.description: golang builder image for Red Hat internal builds
 name: openshift/golang-builder
 owners:
-- aos-team-art@redhat.com
-
+  - aos-team-art@redhat.com
 # Pushing this image to quay with this tag will cause dominoes to fall. The
 # builder-base imagestream will detect the update, triggering buildconfigs
 # on api.ci to create & expose new goloang images.
@@ -31,12 +30,9 @@ owners:
 # - https://github.com/openshift/release/pull/5542
 push:
   also:
-  - quay.io/openshift-release-dev/ocp-v4.0-art-dev
+    - quay.io/openshift-release-dev/ocp-v4.0-art-dev
   additional_tags:
-  - 'rhel-8-golang-1.10'
-
-additional_tags:
-- 'rhel-8-golang-1.10'
-- 'rhel-8-1.10'
+    - 'rhel-8-golang-1.10'
 maintainer:
   component: Release
+image_build_method: osbs2
