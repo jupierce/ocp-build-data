@@ -136,3 +136,9 @@ export GO_COMPLIANCE_CGO_ENABLED_EXCLUDE="else|version"
 export CGO_ENABLED=0
 assert_equal "$(./target_go_wrapper.sh version -ldflags '-extldflags " -static -lm"' 2> /dev/null)" "CGO_ENABLED=0 version -ldflags -extldflags \" -lc -lm\""
 unset GO_COMPLIANCE_CGO_ENABLED_EXCLUDE
+
+export GO_COMPLIANCE_CGO_ENABLED_EXCLUDE="build.*operator-lifecycle-manager/util/cpb"
+export GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE="build.*operator-lifecycle-manager/util/cpb"
+export CGO_ENABLED=0
+assert_equal "$(./target_go_wrapper.sh build -ldflags '-extldflags "-static"' -o $@ github.com/operator-framework/operator-lifecycle-manager/util/cpb 2> /dev/null)" "CGO_ENABLED=0 build -ldflags -extldflags \"-static\" -o github.com/operator-framework/operator-lifecycle-manager/util/cpb"
+unset GO_COMPLIANCE_CGO_ENABLED_EXCLUDE

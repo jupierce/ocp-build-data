@@ -12,6 +12,7 @@ run_go() {
     echo -n "CGO_ENABLED=${CGO_ENABLED} "
     cat <<< "${ARGS[@]}"
   else
+    # The Dockerfile must ensure that "go.real" is in the current $PATH
     echoerr "invoking real go binary"
     go.real "${ARGS[@]}"
   fi
@@ -22,6 +23,7 @@ ARGS=("$@")
 
 GO_COMPLIANCE_CGO_ENABLED_INCLUDE=${GO_COMPLIANCE_CGO_ENABLED_INCLUDE:-'.*'}
 GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE:-'.*'}
+GO_COMPLIANCE_REQUIRE_SYMBOLS_INCLUDE=${GO_COMPLIANCE_REQUIRE_SYMBOLS_INCLUDE:-'.*'}
 
 if [[ -n "${OPENSHIFT_CI}" || "${__doozer_group}" == "openshift"* ]]; then
   GO_COMPLIANCE_POLICY="${GO_COMPLIANCE_POLICY:-exempt_darwin,exempt_cross_compile}"
@@ -29,7 +31,7 @@ else
   GO_COMPLIANCE_POLICY="exempt_all"
 fi
 
-echoerr "invoked GO_COMPLIANCE_POLICY=\"${GO_COMPLIANCE_POLICY}\" GO_COMPLIANCE_CGO_ENABLED_INCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_INCLUDE}\" GO_COMPLIANCE_CGO_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_EXCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE}\""
+echoerr "config GO_COMPLIANCE_POLICY=\"${GO_COMPLIANCE_POLICY}\" GO_COMPLIANCE_CGO_ENABLED_INCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_INCLUDE}\" GO_COMPLIANCE_CGO_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_EXCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE}\" GO_COMPLIANCE_REQUIRE_SYMBOLS_INCLUDE=\"${GO_COMPLIANCE_REQUIRE_SYMBOLS_INCLUDE}\" GO_COMPLIANCE_REQUIRE_SYMBOLS_EXCLUDE=\"${GO_COMPLIANCE_REQUIRE_SYMBOLS_EXCLUDE}\""
 echoerr "incoming command line"
 echoerr "---------------------"
 cat <<< "$@" 1>&2
@@ -110,23 +112,62 @@ if [[ -n "${GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE}" ]]; then
   fi
 fi
 
+FORCE_SYMBOLS=1
+if [[ -n "${GO_COMPLIANCE_REQUIRE_SYMBOLS_INCLUDE}" ]]; then
+  if cat <<< "$@" | grep -E "${GO_COMPLIANCE_REQUIRE_SYMBOLS_INCLUDE}" > /dev/null; then
+    FORCE_SYMBOLS="1"
+  else
+    FORCE_SYMBOLS="0"
+  fi
+fi
+
+if [[ -n "${GO_COMPLIANCE_REQUIRE_SYMBOLS_EXCLUDE}" ]]; then
+  if cat <<< "$@" | grep -E "${GO_COMPLIANCE_REQUIRE_SYMBOLS_EXCLUDE}" > /dev/null; then
+    FORCE_SYMBOLS="0"
+  fi
+fi
+
 echoerr "EXEMPT: ${EXEMPT}"
 if [[ "${EXEMPT}" != "1" ]]; then
 
   echoerr "not exempt: FORCE_CGO_ENABLED=\"${FORCE_CGO_ENABLED}\" FORCE_DYNAMIC=\"${FORCE_DYNAMIC}\""
 
-  if [[ "${FORCE_DYNAMIC}" == "1" ]]; then
+  if [[ "${FORCE_DYNAMIC}" == "1" || "${FORCE_SYMBOLS}" == "1" ]]; then
     # Compilation with -extldflags "-static" is problematic with
     # CGO_ENABLED=1 because compilation tries to link against
     # static libraries which don't exist. Remove -static flag
     # when detected. This is tricky because extldflags can be simple
     # or something like -ldflags '-X $(REPO_PATH)/pkg/version.Raw=$(VERSION) -extldflags "-lm -lstdc++ -static"'
+    IN_LDFLAGS=0
     ARGS=()  # We need to rebuild the argument list.
     for arg in "$@"; do
+
+      if [[ "${IN_LDFLAGS}" == "1" ]]; then
+        # The previous argument was -ldflags. Remove symbol stripping like: -ldflags '-w -s'
+        # but note that the ld flags can be complex like '-X $(REPO_PATH)/pkg/version.Raw=$(VERSION) -extldflags "-lm -lstdc++ -static"'
+        if [[ "${FORCE_SYMBOLS}" == "1" ]]; then
+          pre_arg="${arg}"
+          # Seds out -s and -w and then removes trailing whitespace. Note this could leave us with an empty string.
+          arg=$(echo "${arg}" | sed 's/-s\([^[:alnum:]]\|$\)/\1/g' | sed 's/-w\([^[:alnum:]]\|$\)/\1/g' | sed -e 's/[[:space:]]*$//'))
+          if [[ -z "${arg}" ]]; then
+            # If we are left with an empty string, plug in something benign
+            arg=
+          fi
+          if [[ "${pre_arg}" != "${arg}" ]]; then
+            echoerr "eliminated stripping of debug symbols"
+          fi
+        fi
+        IN_LDFLAGS=0
+      fi
+
+      if [[ "${arg}" == "-ldflags" ]]; then
+        IN_LDFLAGS=1
+      fi
+
       # Note that extldflags is a flag embedded within the value of the
       # -ldflags argument. From our script's perspective, it will be part of a single
       # argument, but this argument might look like '-X $(REPO_PATH)/pkg/version.Raw=$(VERSION) -extldflags "-lm -lstdc++ -static"'.
-      if [[ "${arg}" == *"-extldflags"* ]]; then
+      if [[ "${arg}" == *"-extldflags"* && "${FORCE_DYNAMIC}" == "1" ]]; then
         # We replace -static with -lc because '-lc' implies to link against stdlib. This is a default
         # and should therefore be benign for virtually any compilation (unless -nostdlib or -nodefaultlibs
         # is specified -- and we don't account for this).
@@ -158,6 +199,4 @@ if [[ "${EXEMPT}" != "1" ]]; then
 
 fi
 
-echoerr "invoking actual go binary"
-# The Dockerfile must ensure that "go.real" is in the current $PATH
 run_go "${ARGS[@]}"
