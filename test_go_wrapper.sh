@@ -30,6 +30,7 @@ assert_equal "$(./target_go_wrapper.sh version 2> /dev/null)" "GOEXPERIMENT= CGO
 # Ensure tags are not changed
 export CGO_ENABLED=0
 assert_equal "$(./target_go_wrapper.sh build -tags no_openssl,another_tag 2> /dev/null)" "GOEXPERIMENT= CGO_ENABLED=0 [build][-tags][no_openssl,another_tag]"
+assert_equal "$(./target_go_wrapper.sh build --tags no_openssl,another_tag 2> /dev/null)" "GOEXPERIMENT= CGO_ENABLED=0 [build][--tags][no_openssl,another_tag]"
 
 # Ensure extldflags are not changed
 export CGO_ENABLED=0
@@ -198,6 +199,7 @@ unset GOEXPERIMENT
 assert_equal "$(./target_go_wrapper.sh version -something 5 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [version][-something][5]"
 
 assert_equal "$(./target_go_wrapper.sh build -tags safe_tag,another_safe_tag 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][safe_tag,another_safe_tag,strictfipsruntime]"
+assert_equal "$(./target_go_wrapper.sh build --tags safe_tag,another_safe_tag 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags][safe_tag,another_safe_tag,strictfipsruntime]"
 
 assert_equal "$(./target_go_wrapper.sh build -tags no_openssl 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][shim_prevented_no_openssl,strictfipsruntime]"
 
@@ -218,14 +220,19 @@ unset GO_COMPLIANCE_FOD_MODE_INCLUDE
 assert_equal "$(./target_go_wrapper.sh build ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 
 assert_equal "$(./target_go_wrapper.sh build -tags 'space delimited tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][space delimited tags strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
+assert_equal "$(./target_go_wrapper.sh build --tags 'space delimited tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags][space delimited tags strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 
 assert_equal "$(./target_go_wrapper.sh build -tags='space delimited tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags=space delimited tags strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
+assert_equal "$(./target_go_wrapper.sh build --tags='space delimited tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags=space delimited tags strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 
 assert_equal "$(./target_go_wrapper.sh build -tags='comma,delimited,tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags=comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
+assert_equal "$(./target_go_wrapper.sh build --tags='comma,delimited,tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags=comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 
 # Remove extraneous quotes from tags
 assert_equal "$(./target_go_wrapper.sh build -tags="'comma,delimited,tags'" ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags=comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 assert_equal "$(./target_go_wrapper.sh build -tags "'comma,delimited,tags'" ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
+assert_equal "$(./target_go_wrapper.sh build --tags="'comma,delimited,tags'" ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags=comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
+assert_equal "$(./target_go_wrapper.sh build --tags "'comma,delimited,tags'" ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags][comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 
 # Ignore run command which includes 'build' string.
 assert_equal "$(./target_go_wrapper.sh run build.go build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [run][build.go][build]"

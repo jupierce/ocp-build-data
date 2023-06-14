@@ -37,12 +37,14 @@ else
 fi
 
 echoerr "config GO_COMPLIANCE_POLICY=\"${GO_COMPLIANCE_POLICY}\" GO_COMPLIANCE_CGO_ENABLED_INCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_INCLUDE}\" GO_COMPLIANCE_CGO_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_EXCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE}\" GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE=\"${GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE}\" GO_COMPLIANCE_OPENSSL_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_OPENSSL_ENABLED_EXCLUDE}\" GO_COMPLIANCE_FOD_MODE_INCLUDE=\"${GO_COMPLIANCE_FOD_MODE_INCLUDE}\" GO_COMPLIANCE_FOD_MODE_EXCLUDE=\"${GO_COMPLIANCE_FOD_MODE_EXCLUDE}\""
-echoerr "incoming command line"
-echoerr "---------------------"
+
+echo 1>&2
+echo 1>&2
+echo -n "${LOG_PREFIX} incoming command line arguments: " 1>&2
 for arg in "$@"; do
   echo -n "\"${arg}\" " 1>&2
 done
-echoerr "---------------------"
+echo 1>&2
 echo 1>&2
 
 echoerr "incoming environment: "
@@ -157,7 +159,7 @@ if [[ -n "${GO_COMPLIANCE_EXCLUDE}" ]]; then
 fi
 
 HAS_TAGS=0
-if cat <<< "$@" | grep "\-tags" > /dev/null; then
+if cat <<< "$@" | grep "\-tags" > /dev/null; then  # Note that go permits -tags or --tags
   HAS_TAGS="1"
 fi
 
@@ -190,7 +192,7 @@ if [[ "${EXEMPT}" != "1" ]]; then
       continue  # We've already added 'build', so don't reach the bottom of the loop where it would be added again.
     fi
 
-    if [[ "${arg}" == "-tags="* && "${FORCE_FOD_MODE}" == "1" ]]; then
+    if [[ ( "${arg}" == "-tags="* || "${arg}" == "--tags="* ) && "${FORCE_FOD_MODE}" == "1" ]]; then
       echoerr "adding strictfipsruntime tag to \"${arg}\""
       arg=$(echo "${arg}" | tr -d "'" | tr -d "\"")  # Delete any quotes which get passed in literally. grafana managed this.
       if [[ "${arg}" == *" "* ]]; then  # If the tags parameter is space delimited
@@ -222,7 +224,7 @@ if [[ "${EXEMPT}" != "1" ]]; then
       IN_TAGS=0
     fi
 
-    if [[ "${arg}" == "-tags" ]]; then
+    if [[ "${arg}" == "-tags" || "${arg}" == "--tags" ]]; then
       IN_TAGS=1
     fi
 
@@ -271,11 +273,13 @@ if [[ "${EXEMPT}" != "1" ]]; then
 
 fi
 
-echoerr "final command line arguments:"
-echoerr "---------------------"
+echo 1>&2
+echo 1>&2
+echo -n "${LOG_PREFIX} final command line arguments: " 1>&2
 for arg in "${ARGS[@]}"; do
   echo -n "\"${arg}\" " 1>&2
 done
-echoerr "---------------------"
+echo 1>&2
+echo 1>&2
 
 run_go "${ARGS[@]}"
