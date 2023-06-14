@@ -30,6 +30,8 @@ GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE=${GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE:-'
 
 if [[ -n "${OPENSHIFT_CI}" || "${__doozer_group}" == "openshift-"* ]]; then
   GO_COMPLIANCE_POLICY="${GO_COMPLIANCE_POLICY:-exempt_darwin,exempt_cross_compile}"
+  export GOTOOLCHAIN="local"
+  echoerr "Forcing GOTOOLCHAIN=${GOTOOLCHAIN}"
 else
   GO_COMPLIANCE_POLICY="exempt_all"
 fi
