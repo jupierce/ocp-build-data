@@ -5,25 +5,19 @@ content:
     dockerfile: openshift-golang-builder.Dockerfile
     git:
       branch:
-        target: golang-1.16
-      url: git@github.com:openshift/ocp-build-data.git
+        target: golang-1.16-go-wrapper
+      url: git@github.com:jupierce/ocp-build-data.git
 enabled_repos:
-- rhel-7-newer-golang-rpms
-- rhel-7-server-rpms
-- rhel-server-ose-build-rpms
+  - rhel-7-newer-golang-rpms
+  - rhel-7-server-rpms
+  - rhel-server-ose-build-rpms
 from:
   image: openshift/ose-base:ubi7
 labels:
   io.k8s.description: golang builder image for Red Hat internal builds
 name: openshift/golang-builder
 owners:
-- aos-team-art@redhat.com
-
-# Tag in osbs for consumption by various streams.yml
-additional_tags:
-- '1.16'
-- 'rhel-7-1.16'
-- 'rhel_7_golang_1.16'
-- 'rhel_7_1.16'
+  - aos-team-art@redhat.com
 maintainer:
   component: Release
+image_build_method: osbs2
