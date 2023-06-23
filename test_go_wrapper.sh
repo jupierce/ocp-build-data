@@ -75,8 +75,20 @@ export CGO_ENABLED=0
 assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "GOEXPERIMENT= CGO_ENABLED=0 [build]"
 unset GOOS
 
+export GOOS="windows"
+export CGO_ENABLED=0
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "GOEXPERIMENT= CGO_ENABLED=0 [build]"
+unset GOOS
+
 export GO_COMPLIANCE_POLICY="none"
 export GOOS="darwin"
+export CGO_ENABLED=0
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][strictfipsruntime]"
+unset GO_COMPLIANCE_POLICY
+unset GOOS
+
+export GO_COMPLIANCE_POLICY="none"
+export GOOS="windows"
 export CGO_ENABLED=0
 assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][strictfipsruntime]"
 unset GO_COMPLIANCE_POLICY

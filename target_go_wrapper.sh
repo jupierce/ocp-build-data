@@ -29,7 +29,7 @@ GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE:-'
 GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE=${GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE:-'.*'}
 
 if [[ -n "${OPENSHIFT_CI}" || "${__doozer_group}" == "openshift-"* ]]; then
-  GO_COMPLIANCE_POLICY="${GO_COMPLIANCE_POLICY:-exempt_darwin,exempt_cross_compile}"
+  GO_COMPLIANCE_POLICY="${GO_COMPLIANCE_POLICY:-exempt_darwin,exempt_windows,exempt_cross_compile}"
   export GOTOOLCHAIN="local"
   echoerr "Forcing GOTOOLCHAIN=${GOTOOLCHAIN}"
 else
@@ -63,6 +63,13 @@ fi
 EXEMPT="0"
 if [[ "${GO_COMPLIANCE_POLICY}" == *"exempt_darwin"* ]]; then
   if [[ "$GOOS" == "darwin" ]]; then
+    echoerr "skipping forced compliance due to GOOS=${GOOS}"
+    EXEMPT="1"
+  fi
+fi
+
+if [[ "${GO_COMPLIANCE_POLICY}" == *"exempt_windows"* ]]; then
+  if [[ "$GOOS" == "windows" ]]; then
     echoerr "skipping forced compliance due to GOOS=${GOOS}"
     EXEMPT="1"
   fi
