@@ -74,3 +74,5 @@ RUN [ $(go env GOARCH) != "amd64" ] || (\
     yum clean all -y)
 # above is conditional; clean up unconditionally
 RUN rm -f cross.tar.gz
+COPY go_wrapper.sh /tmp/go_wrapper.sh
+RUN /bin/bash -c 'GO_BIN_PATH=`which go`; mv $GO_BIN_PATH $GO_BIN_PATH.real; mv /tmp/go_wrapper.sh $GO_BIN_PATH; chmod +x $GO_BIN_PATH'
