@@ -1,9 +1,12 @@
 #!/bin/sh
 
 LOG_PREFIX="Go compliance shim [${__doozer_group}][${__doozer_key}]:"
+
 echoerr() {
-  echo -n "${LOG_PREFIX} " 1>&2
-  cat <<< "$@" 1>&2
+  if [[ "${GO_COMPLIANCE_DEBUG}" == "1" || "${GO_COMPLIANCE_INFO}" == "1" ]]; then
+    echo -n "${LOG_PREFIX} " 1>&2
+    cat <<< "$@" 1>&2
+  fi
 }
 
 run_go() {
@@ -23,6 +26,7 @@ run_go() {
 # Create an array of command line arguments.
 ARGS=("$@")
 
+GO_COMPLIANCE_INFO=${GO_COMPLIANCE_INFO:-"1"}
 GO_COMPLIANCE_FOD_MODE_INCLUDE=${GO_COMPLIANCE_FOD_MODE_INCLUDE:-'.*'}
 GO_COMPLIANCE_CGO_ENABLED_INCLUDE=${GO_COMPLIANCE_CGO_ENABLED_INCLUDE:-'.*'}
 GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE:-'.*'}
@@ -36,22 +40,24 @@ else
   GO_COMPLIANCE_POLICY="exempt_all"
 fi
 
-echoerr "config GO_COMPLIANCE_POLICY=\"${GO_COMPLIANCE_POLICY}\" GO_COMPLIANCE_CGO_ENABLED_INCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_INCLUDE}\" GO_COMPLIANCE_CGO_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_EXCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE}\" GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE=\"${GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE}\" GO_COMPLIANCE_OPENSSL_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_OPENSSL_ENABLED_EXCLUDE}\" GO_COMPLIANCE_FOD_MODE_INCLUDE=\"${GO_COMPLIANCE_FOD_MODE_INCLUDE}\" GO_COMPLIANCE_FOD_MODE_EXCLUDE=\"${GO_COMPLIANCE_FOD_MODE_EXCLUDE}\""
+if [[ "${GO_COMPLIANCE_DEBUG}" == "1" ]]; then
+  echoerr "config GO_COMPLIANCE_POLICY=\"${GO_COMPLIANCE_POLICY}\" GO_COMPLIANCE_CGO_ENABLED_INCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_INCLUDE}\" GO_COMPLIANCE_CGO_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_CGO_ENABLED_EXCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_INCLUDE}\" GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE=\"${GO_COMPLIANCE_DYNAMIC_LINKING_EXCLUDE}\" GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE=\"${GO_COMPLIANCE_OPENSSL_ENABLED_INCLUDE}\" GO_COMPLIANCE_OPENSSL_ENABLED_EXCLUDE=\"${GO_COMPLIANCE_OPENSSL_ENABLED_EXCLUDE}\" GO_COMPLIANCE_FOD_MODE_INCLUDE=\"${GO_COMPLIANCE_FOD_MODE_INCLUDE}\" GO_COMPLIANCE_FOD_MODE_EXCLUDE=\"${GO_COMPLIANCE_FOD_MODE_EXCLUDE}\""
 
-echo 1>&2
-echo 1>&2
-echo -n "${LOG_PREFIX} incoming command line arguments: " 1>&2
-for arg in "$@"; do
-  echo -n "\"${arg}\" " 1>&2
-done
-echo 1>&2
-echo 1>&2
+  echo 1>&2
+  echo 1>&2
+  echo -n "${LOG_PREFIX} incoming command line arguments: " 1>&2
+  for arg in "$@"; do
+    echo -n "\"${arg}\" " 1>&2
+  done
+  echo 1>&2
+  echo 1>&2
 
-echoerr "incoming environment: "
-echoerr "---------------------"
-env 1>&2
-echoerr "---------------------"
-echo 1>&2
+  echoerr "incoming environment: "
+  echoerr "---------------------"
+  env 1>&2
+  echoerr "---------------------"
+  echo 1>&2
+fi
 
 echoerr "assessment: CGO_ENABLED=${CGO_ENABLED:-1}"
 if cat <<< "$@" | grep "-extldflags.*-static" > /dev/null; then
@@ -280,13 +286,15 @@ if [[ "${EXEMPT}" != "1" ]]; then
 
 fi
 
-echo 1>&2
-echo 1>&2
-echo -n "${LOG_PREFIX} final command line arguments: " 1>&2
-for arg in "${ARGS[@]}"; do
-  echo -n "\"${arg}\" " 1>&2
-done
-echo 1>&2
-echo 1>&2
+if [[ "${GO_COMPLIANCE_INFO}" == "1" ]]; then
+  echo 1>&2
+  echo 1>&2
+  echo -n "${LOG_PREFIX} final command line arguments: " 1>&2
+  for arg in "${ARGS[@]}"; do
+    echo -n "\"${arg}\" " 1>&2
+  done
+  echo 1>&2
+  echo 1>&2
+fi
 
 run_go "${ARGS[@]}"

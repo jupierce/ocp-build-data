@@ -14,6 +14,7 @@ assert_equal() {
 
 # Shim should just output results instead of invoking go.
 export SHIM_TEST=1
+export GO_COMPLIANCE_INFO=1
 
 # Unless OPENSHIFT_CI or __doozer_group=="openshift-*", then the shim should
 # not change the command line or environment.
