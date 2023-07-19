@@ -209,7 +209,7 @@ unset GO_COMPLIANCE_FOD_MODE_EXCLUDE
 unset GOEXPERIMENT
 
 # Do not apply tags to non build command unless it contains -tags.
-assert_equal "$(./target_go_wrapper.sh version -something 5 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [version][-something][5]"
+assert_equal "$(./target_go_wrapper.sh version -something 5 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=0 [version][-something][5]"
 
 assert_equal "$(./target_go_wrapper.sh build -tags safe_tag,another_safe_tag 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][safe_tag,another_safe_tag,strictfipsruntime]"
 assert_equal "$(./target_go_wrapper.sh build --tags safe_tag,another_safe_tag 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags][safe_tag,another_safe_tag,strictfipsruntime]"
@@ -248,7 +248,7 @@ assert_equal "$(./target_go_wrapper.sh build --tags="'comma,delimited,tags'" ./c
 assert_equal "$(./target_go_wrapper.sh build --tags "'comma,delimited,tags'" ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][--tags][comma,delimited,tags,strictfipsruntime][./cmd/cluster-openshift-apiserver-operator]"
 
 # Ignore run command which includes 'build' string.
-assert_equal "$(./target_go_wrapper.sh run build.go build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [run][build.go][build]"
+assert_equal "$(./target_go_wrapper.sh run build.go build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=0 [run][build.go][build]"
 
 # Ensure strictfipsruntime is not included in GOEXPERIMENT twice
 export GOEXPERIMENT="strictfipsruntime,test"
@@ -258,3 +258,30 @@ unset GOEXPERIMENT
 export GO_COMPLIANCE_FOD_MODE_INCLUDE="not_build" # Prevent include from matching
 assert_equal "$(./target_go_wrapper.sh build -tags='space delimited tags' ./cmd/cluster-openshift-apiserver-operator 2> /dev/null)" "GOEXPERIMENT= CGO_ENABLED=1 [build][-tags=space delimited tags][./cmd/cluster-openshift-apiserver-operator]"
 unset GO_COMPLIANCE_FOD_MODE_INCLUDE
+
+# Do not enforce strict on non-build commands
+export GO_COMPLIANCE_STRICT="basic"
+assert_equal "$(./target_go_wrapper.sh version 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=0 [version]"
+unset GO_COMPLIANCE_STRICT
+
+# Do not enforce strict on non-build commands
+export GO_COMPLIANCE_STRICT="full"
+assert_equal "$(./target_go_wrapper.sh version 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=0 [version]"
+unset GO_COMPLIANCE_STRICT
+
+export GO_COMPLIANCE_STRICT="basic"
+export CGO_ENABLED="0"
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "STRICTERROR"  # violate basic strict CGO_ENABLED=1
+export CGO_ENABLED="1"
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][strictfipsruntime]"
+assert_equal "$(./target_go_wrapper.sh build -tags no_openssl 2> /dev/null)" "STRICTERROR"   # violate basic strict with no_openssl
+assert_equal "$(./target_go_wrapper.sh build -ldflags '-extldflags "-static"' 2> /dev/null)" "STRICTERROR"   # violate basic strict with static linking
+export GO_COMPLIANCE_STRICT="full"
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "STRICTERROR"  # violate basic strict CGO_ENABLED=1
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "STRICTERROR"
+assert_equal "$(./target_go_wrapper.sh build -tags no_openssl 2> /dev/null)" "STRICTERROR"   # violate basic strict with no_openssl
+assert_equal "$(./target_go_wrapper.sh build -ldflags '-extldflags "-static"' 2> /dev/null)" "STRICTERROR"   # violate basic strict with static linking
+export GOEXPERIMENT="strictfipsruntime"
+assert_equal "$(./target_go_wrapper.sh build 2> /dev/null)" "GOEXPERIMENT=strictfipsruntime CGO_ENABLED=1 [build][-tags][strictfipsruntime]"  # finally compliant with full strict
+unset GOEXPERIMENT
+unset GO_COMPLIANCE_STRICT

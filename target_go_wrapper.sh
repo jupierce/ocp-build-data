@@ -9,6 +9,13 @@ echoerr() {
   fi
 }
 
+stricterror() {
+  echoerr "ERROR: terminating go build due to strict mode non-compliance"
+  if [[ "${SHIM_TEST}" == "1" ]]; then
+    echo "STRICTERROR"
+  fi
+}
+
 run_go() {
   if [[ "${SHIM_TEST}" == "1" ]]; then
     echoerr "running with SHIM_TEST=${SHIM_TEST}"
@@ -64,6 +71,24 @@ if cat <<< "$@" | grep "-extldflags.*-static" > /dev/null; then
   echoerr "assessment: static linking"
 else
   echoerr "assessment: dynamic linking"
+fi
+
+# Basic strict mode requires incoming compiler
+# invocation to be compliant EXCEPT for strictfipsmode.
+STRICT_MODE_BASIC="0"
+if [[ "${GO_COMPLIANCE_STRICT}" == "basic" ]]; then
+  echoerr "setting strict_basic mode for FIPS compliance"
+  STRICT_MODE_BASIC="1"
+fi
+
+# Full strict mode requires incoming compiler
+# invocation to be compliant, including GOEXPERIMENT
+# with strictfipsmode.
+STRICT_MODE_FULL="0"
+if [[ "${GO_COMPLIANCE_STRICT}" == "full" ]]; then
+  echoerr "setting strict_full mode for FIPS compliance"
+  STRICT_MODE_FULL="1"
+  STRICT_MODE_BASIC="1"
 fi
 
 EXEMPT="0"
@@ -181,6 +206,7 @@ if [[ "${EXEMPT}" != "1" ]]; then
 
   echoerr "not exempt: FORCE_CGO_ENABLED=\"${FORCE_CGO_ENABLED}\" FORCE_DYNAMIC=\"${FORCE_DYNAMIC}\" FORCE_OPENSSL=\"${FORCE_OPENSSL}\" FORCE_FOD_MODE=\"${FORCE_FOD_MODE}\""
 
+  IN_BUILD=0
   IN_RUN=0
   IN_TAGS=0
   ARGS=()  # We need to rebuild the argument list.
@@ -196,6 +222,12 @@ if [[ "${EXEMPT}" != "1" ]]; then
       # -tags apparently cannot come after a build path
       # e.g. "build ./cmd/cluster-openshift-apiserver-operator -tags strictfipsruntime" is invalid.
       # So, if we see "build" and no "-tags" ahead, then go ahead and force FOD tag.
+
+      IN_BUILD="1"  # This is a go build invocation
+      if [[ "${STRICT_MODE_FULL}" == "1" && "${GOEXPERIMENT}" != *"strictfipsruntime"* ]]; then
+        stricterror
+        exit 1
+      fi
 
       ARGS+=("${arg}") # Add "build"
       if [[ "${FORCE_FOD_MODE}" == "1" && "${HAS_TAGS}" == "0" ]]; then
@@ -232,6 +264,10 @@ if [[ "${EXEMPT}" != "1" ]]; then
         arg=$(echo "${arg}" | sed 's/no_openssl/shim_prevented_no_openssl/g')
         if [[ "${pre_arg}" != "${arg}" ]]; then
           echoerr "non-compliant: eliminated no_openssl"
+          if [[ "${STRICT_MODE_BASIC}" == "1" ]]; then
+            stricterror
+            exit 1
+          fi
         fi
       fi
       IN_TAGS=0
@@ -262,14 +298,22 @@ if [[ "${EXEMPT}" != "1" ]]; then
       arg=$(echo "${arg}" | sed "s/-static/-lc/g")
       if [[ "${pre_arg}" != "${arg}" ]]; then
         echoerr "non-compliant: eliminated static"
+        if [[ "${STRICT_MODE_BASIC}" == "1" ]]; then
+          stricterror
+          exit 1
+        fi
       fi
     fi
     ARGS+=("${arg}")
   done
 
-  if [[ "${FORCE_CGO_ENABLED}" == "1" ]]; then
+  if [[ "${FORCE_CGO_ENABLED}" == "1" && "${IN_BUILD}" == "1" ]]; then
       if [[ "${CGO_ENABLED}" == "0" ]]; then
         echoerr "non-compliant: had to turn on CGO_ENABLED"
+        if [[ "${STRICT_MODE_BASIC}" == "1" ]]; then
+          stricterror
+          exit 1
+        fi
       fi
       export CGO_ENABLED="1"
       echoerr "setting CGO_ENABLED=${CGO_ENABLED}"
