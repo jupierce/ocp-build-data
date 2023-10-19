@@ -2,6 +2,9 @@
 
 LOG_PREFIX="Go compliance shim [$$] [${__doozer_group}][${__doozer_key}]:"
 
+# Force off compliance requirements for 4.13
+export GO_COMPLIANCE_POLICY="exempt_all"
+
 echoerr() {
   if [[ "${GO_COMPLIANCE_DEBUG}" == "1" || "${GO_COMPLIANCE_INFO}" == "1" ]]; then
     echo -n "${LOG_PREFIX} " 1>&2
@@ -327,14 +330,14 @@ if [[ "${EXEMPT}" != "1" ]]; then
       echoerr "setting CGO_ENABLED=${CGO_ENABLED}"
   fi
 
-  if [[ "${FORCE_FOD_MODE}" == "1" && "${GOEXPERIMENT}" != *"strictfipsruntime"* ]]; then
-    if [[ -n "${GOEXPERIMENT}" ]]; then
-      export GOEXPERIMENT="strictfipsruntime,${GOEXPERIMENT}"
-    else
-      export GOEXPERIMENT="strictfipsruntime"
-  fi
-    echoerr "setting GOEXPERIMENT=${GOEXPERIMENT}"
-  fi
+#  if [[ "${FORCE_FOD_MODE}" == "1" && "${GOEXPERIMENT}" != *"strictfipsruntime"* ]]; then
+#    if [[ -n "${GOEXPERIMENT}" ]]; then
+#      export GOEXPERIMENT="strictfipsruntime,${GOEXPERIMENT}"
+#    else
+#      export GOEXPERIMENT="strictfipsruntime"
+#  fi
+#    echoerr "setting GOEXPERIMENT=${GOEXPERIMENT}"
+#  fi
 
 fi
 
