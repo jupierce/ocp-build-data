@@ -35,5 +35,6 @@ owners:
 - kni-devel-deployment@redhat.com
 konflux:
   vm_override:
-    aarch64: linux-cxlarge/arm64
+    aarch64: linux-d160/arm64
+    ppc64le: linux-d400-large/ppc64le
     s390x: linux-large/s390x
