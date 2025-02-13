@@ -35,6 +35,7 @@ owners:
 - kni-devel-deployment@redhat.com
 konflux:
   vm_override:
+    # High intensity build requires more CPU
     x86_64: linux-c4xlarge/amd64
     aarch64: linux-c4xlarge/arm64
     s390x: linux-largecpu/s390x
