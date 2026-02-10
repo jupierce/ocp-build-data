@@ -655,6 +655,17 @@ releases:
       group:
         build_profiles:
           enable_go_cover: true
+      images:
+        - distgit_key: 'kube-rbac-proxy'
+          why: Enable a different coverage port to prevent port conflict
+          metadata:
+            envs:
+              COVERAGE_PORT: 8095
+        - distgit_key: 'prom-label-proxy'
+          why: Enable a different coverage port to prevent port conflict
+          metadata:
+            envs:
+              COVERAGE_PORT: 8095
       streams:
         rhel-9-golang:
           image: quay.io/redhat-user-workloads/ocp-art-tenant/art-images:golang-builder-v1.24.11-202602060215.ge8e5642.el9-2
